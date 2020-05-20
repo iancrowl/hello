@@ -1,43 +1,19 @@
-# Python CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-python/ for more details
-#
-version: 2
-jobs:
-  build:
-    docker:
-    # Use the same Docker base as the project
-      - image: python:3.7.3-stretch
+FROM python:3.7.3-stretch
 
-    working_directory: ~/repo
+# Working Directory
+WORKDIR /app
 
-    steps:
-      - checkout
+# Copy source code to working directory
+COPY . flask_app/web.py /app/
+COPY . nlib /app/
 
-      # Download and cache dependencies
-      - restore_cache:
-          keys:
-            - v1-dependencies-{{ checksum "requirements.txt" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+# Install packages from requirements.txt
+# hadolint ignore=DL3013
+RUN pip install --upgrade pip &&\
+    pip install --trusted-host pypi.python.org -r requirements.txt
 
-      - run:
-          name: install dependencies
-          command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            make install
-           
+# Expose port 80
+EXPOSE 80
 
-      - save_cache:
-          paths:
-            - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
-
-      # run lint!
-      - run:
-          name: run lint
-          command: |
-            . venv/bin/activate
-            make lint           
-
+# Run app.py at container launch
+CMD ["python", "web.py"]
